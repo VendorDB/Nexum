@@ -1,0 +1,81 @@
+# -----------------------------------------------------------------------------------------------
+# | DO NOT MODIFY THIS FILE!                                                                    |
+# | This is the default configuration, which is subject to change on any update.                |
+# | To apply your own configuration, create a new file in this directory with your overrides.   |
+# | To use your overrides, set NODE_ENV in .env to the file name you chose (without extension). |
+# |                                                                                             |
+# | Your configs override, not replace the default configs.                                     |
+# |                                                                                             |
+# | Example:                                                                                    |
+# |                                                                                             |
+# | Create config/production.yml with content:                                                  |
+# | port: 8080                                                                                  |
+# |                                                                                             |
+# | Set NODE_ENV in .env to "production"                                                        |
+# |                                                                                             |
+# | Start application                                                                           |
+# -----------------------------------------------------------------------------------------------
+
+# The network port to listen on
+port: 3000
+
+# Prefix for all API paths, used for serving the API on the same (sub)domain as the client via reverse proxy
+path-prefix: "/api"
+
+# URL to your client instance, used for email templating
+client-url: "https://your.domain"
+
+# The API versions you wish to support
+# You should not override this if you are not doing something very specific. Old versions are automatically being deprecated.
+api-versions: 
+  - v1
+
+# MongoDB database config
+database:
+  name: "VendorDB"
+  url: "mongodb://localhost:27017"
+
+# Captcha disabled until we know whether we'll use captchas or not
+# captcha:
+#   registration: true # Verify captcha on registration
+#   review: true # Verify captcha when posting reviews
+#   secret: "" # hCaptcha Secret
+
+registration:
+
+  # When a user registers with this email, they will automatically be granted admin permissions
+  # This is only used for the INITIAL admin account. You'll be able to grant admin to more users using the API.
+  default-admin: 'admin@your.domain'
+
+  # Block specific email providers from being used
+  email-providers:
+    type: 0 # 0 = blacklist | 1 = whitelist
+    list:
+      - "example.com" # Blocks adresses from example.com (+ subdomains)
+
+mail:
+
+  # The address mails should be sent from
+  from: 'noreply@your.domain'
+
+  # SMTP connection info for sending mails
+  smtp:
+    host: 'localhost'
+    port: 587
+    secure: false # Whether to use TLS. If false, attempts STARTTLS.
+    authMethod: 'PLAIN'
+    auth:
+      user: 'noreply@your.domain'
+      pass: 'VerySecurePassword'
+
+  # Customize mail subjects. To customize actual content, take a look at the templates/mail directory
+  subjects:
+    verification: "VendorDB Email Verification"
+    recovery: "VendorDB Password Recovery"
+
+bcrypt:
+  # Amount of hashing rounds for bcyrpt. It is recommended to set this to the number that results from `npm run bcrypt-rounds`
+  rounds: 10
+
+# Secret used for signing JSONWebTokens (session tokens)
+jwt-secret: 'CHANGE_ME!' # Generate your secret using `npm run jwt-secret`

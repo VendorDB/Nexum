@@ -1,0 +1,18 @@
+doctype html
+html
+  head
+    meta(charset='UTF-8')
+    meta(name='viewport', content='width=device-width, initial-scale=1.0')
+    title Verify Your Email Address
+    style
+      include style.css
+  body
+    div(class='container')
+      h2 Verify Your Email Address, #{username}!
+      p We are excited to have you on board. Please click the button below to verify your email address:
+      p
+        a(class='btn', href=link) Verify Email Address
+      p If the button above doesn't work, you can also copy and paste the following link into your web browser:
+      p #{link}
+      p Thank you,
+      p The Team

@@ -1,0 +1,31 @@
+{
+	"compilerOptions": {
+		/* Language and Environment */
+		"target": "ES2021", /* Set the JavaScript language version for emitted JavaScript and include compatible library declarations. */
+		/* Modules */
+		"module": "CommonJS", /* Specify what module code is generated. */
+		"rootDir": "./src/", /* Specify the root folder within your source files. */
+		"moduleResolution": "Node", /* Specify how TypeScript looks up a file from a given module specifier. */
+		"baseUrl": "./src", /* Specify the base directory to resolve non-relative module names. */
+		"paths": {
+			"@util/*": [
+				"util/*"
+			],
+			"@types/*": [
+				"types/*"
+			],
+			"@middleware/*": [
+				"middleware/*"
+			]
+		}, /* Specify a set of entries that re-map imports to additional lookup locations. */
+		"outDir": "./build/", /* Specify an output folder for all emitted files. */
+		/* Interop Constraints */
+		"esModuleInterop": true, /* Emit additional JavaScript to ease support for importing CommonJS modules. This enables 'allowSyntheticDefaultImports' for type compatibility. */
+		"forceConsistentCasingInFileNames": true, /* Ensure that casing is correct in imports. */
+		/* Type Checking */
+		"strict": true, /* Enable all strict type-checking options. */
+		/* Completeness */
+		"skipLibCheck": true /* Skip type checking all .d.ts files. */
+	},
+	"include": ["src/**/*.ts", ".eslintrc.js"]
+}
