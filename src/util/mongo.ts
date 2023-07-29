@@ -78,6 +78,14 @@ export const update = (collection: string, query: any, newvals: any) => {
 	})
 }
 
+export const updatePush = (collection: string, query: any, newvals: any) => {
+	return new Promise<object>((resolve, reject) => {
+		const obj = { $push: newvals }
+		db.collection(collection).updateOne(query, obj)
+			.then(res => resolve(res))
+	})
+}
+
 export const remove = (collection: string, query: any) => {
 	return new Promise<object>((resolve, reject) => {
 		db.collection(collection).deleteOne(query)
@@ -89,6 +97,7 @@ export const aggregate = (collection: string, pipeline: any[]) => {
 	return new Promise<object[]>((resolve, reject) => {
 		db.collection(collection).aggregate(pipeline).toArray()
 			.then(res => resolve(res))
+			.catch(err => reject(err))
 	})
 }
 
@@ -98,5 +107,6 @@ export default {
 	queryOne,
 	remove,
 	update,
+	updatePush,
 	aggregate
 }

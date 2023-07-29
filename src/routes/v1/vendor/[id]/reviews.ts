@@ -17,28 +17,48 @@ import { Handler } from 'express'
 import mongo from '@util/mongo'
 import { ObjectId } from 'mongodb'
 
+type SortField = 'created' | 'stars'
+
 export const get: Handler = async (req, res) => {
 
 	const pageSize = parseInt(<string>req.query.limit) || 25
-
 	const pageNumber = parseInt(<string>req.query.page) || 1
-
 	const skipItems = (pageNumber - 1) * pageSize
+
+	const sortField: SortField = req.query.sort as SortField || 'created' // Default sorting by creation date
+	const sortOrder = req.query.order === 'desc' ? -1 : 1
+
+	console.log(sortOrder + ' | ' + typeof sortOrder)
+	console.log(sortField + ' | ' + typeof sortField)
 
 	const filter = { _id: new ObjectId(req.params.id) }
 
-	const projection = {
-		reviews: { $slice: ['$reviews', skipItems, pageSize] }
-	}
+	const sorting = {
+		[sortField]: sortOrder,
+	} as { [key in SortField]: number }
+
+	sorting[sortField] = sortOrder
 
 	const pipeline = [
 		{ $match: filter },
-		{ $project: projection }
+		{ $unwind: '$reviews' }, // Unwind the reviews array
+		{
+			$project: {
+				_id: 0, // Exclude the _id field from the output
+				reviews: 1 // Include only the reviews field in the output
+			}
+		},
+		{
+			$replaceRoot: { newRoot: '$reviews' } // Promote the "reviews" field to the root level
+		},
+		{ $sort: { [sortField]: sortOrder } }, // Sort the reviews directly using field name and order
+		{ $skip: skipItems }, // Apply pagination with $skip
+		{ $limit: pageSize }, // Apply pagination with $limit
 	]
 
-	const result = <Vendor[]>await mongo.aggregate('Vendors', pipeline)
+	const result = <Review[]>(await mongo.aggregate('Vendors', pipeline))
 
-	if (!result || !result[0] || !result[0].reviews) {
+	if (!result) {
 		res.status(404).json({
 			status: 'ERROR',
 			error: 'NOT_FOUND',
@@ -47,7 +67,7 @@ export const get: Handler = async (req, res) => {
 		return
 	}
 
-	res.json(result[0].reviews)
+	res.json(result)
 
 }
 
@@ -63,7 +83,7 @@ export const post: Handler = async (req, res) => {
 		return
 	}
 
-	const vendor = await mongo.queryOne('Vendors', { _id: req.params.id })
+	const vendor = <Vendor>await mongo.queryOne('Vendors', { _id: req.params.id })
 
 	if (!vendor) {
 		res.status(404).json({
@@ -78,8 +98,36 @@ export const post: Handler = async (req, res) => {
 	const message = req.body.message
 	const attachments = req.body.attachments
 
-	await mongo.update('Vendors', { _id: req.params.id }, {
-		$push: {
+	// Calculate the likelihood to be held for moderator review
+	// If reputation < 1: Always true
+	// If reputation >= 1: For each reputation, gain 1% chance of instant publishing, up to 75%
+	//const isHeld = user.reputation > 0 ? Math.random() <= Math.min(user.reputation / 100, 0.75) : true
+	const isHeld = false
+
+	const review: Review = {
+		stars,
+		message,
+		attachments,
+		created: Date.now(),
+		author: {
+			username: req.user.username,
+			id: req.user._id.toString()
+		}
+	}
+
+	if (isHeld) {
+		mongo.insert('HeldReviews', {
+			vendor: vendor._id,
+			review
+		})
+	} else {
+
+		// Increase reputation on published reviews
+		mongo.update('Users', { _id: user._id }, {
+			reputation: user.reputation + 1
+		})
+
+		await mongo.updatePush('Vendors', { _id: new ObjectId(req.params.id) }, {
 			reviews: {
 				stars,
 				message,
@@ -90,11 +138,12 @@ export const post: Handler = async (req, res) => {
 					id: req.user._id.toString()
 				}
 			}
-		}
-	})
+		})
+	}
 
 	res.json({
-		status: 'SUCCESS'
+		status: 'SUCCESS',
+		isHeld
 	})
 
 }

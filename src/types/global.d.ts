@@ -46,6 +46,7 @@ declare global {
 	}
 
 	interface Vendor {
+		_id: string;
 		name: string;
 		url: string;
 		logo: string;

@@ -14,41 +14,49 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import { Handler } from 'express'
-import hat from 'hat'
 import mongo from '@util/mongo'
-import { generateJWT } from '@util/user'
+import { sendMail } from '@util/mail'
+import config from 'config'
 
-export const get: Handler = async (req, res) => {
+export const post: Handler = async (req, res) => {
 
-	if (req.bot) {
+	if (req.user) {
 		res.status(403).json({
 			status: 'ERROR',
-			error: 'USER_ONLY',
-			message: 'This endpoint is only available to users'
+			error: 'LOGGED_IN',
+			message: 'You are already logged in'
 		})
 		return
 	}
 
-	const user = req.user
+	if (!req.body.email || req.body.email.trim() == '') {
+		res.status(403).json({
+			status: 'ERROR',
+			error: 'MISSING_EMAIL',
+			message: 'Please provide an email address'
+		})
+		return
+	}
+
+	const email = req.body.email.toLowerCase()
+
+	const user = <User | null> await mongo.queryOne('Users', {email, emailVerified: false})
 
 	if (!user) {
-		res.status(401).json({
+		res.status(404).json({
 			status: 'ERROR',
-			error: 'UNAUTHORIZED',
-			message: 'Please log in first'
+			error: 'NOT_FOUND',
+			message: 'There is no un-verified user with this email address'
 		})
 		return
 	}
 
-	const apiKey = hat()
-
-	const token = generateJWT(apiKey, 'API')
-
-	await mongo.update('Users', req.user, { apiKey })
-
+	sendMail(email, 'verification', {
+		username: user.username,
+		link: config.get('client-url') + `/signup/verify-mail?code=${user.verificationCode}`
+	})
 	res.json({
-		status: 'SUCCESS',
-		token
+		status: 'SUCCESS'
 	})
 
 }

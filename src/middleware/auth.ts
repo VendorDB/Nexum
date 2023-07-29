@@ -41,10 +41,12 @@ export default async (req: Request, res: Response, next: NextFunction) => {
 		req.user = <User> await mongo.queryOne('Users', {
 			apiKey: data.id
 		})
+		req.bot = true
 	} else {
 		req.user = <User> await mongo.queryOne('Users', {
 			_id: new ObjectId(data.id)
 		})
+		req.bot = false
 	}
 
 	next()

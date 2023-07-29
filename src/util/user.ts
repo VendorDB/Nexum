@@ -30,7 +30,7 @@ export const verifyUsername = (username: string) => {
 export const verifyPassword = (password: string) => {
 	if (
 		password.includes(' ') || // No spaces
-		password.length < 8 || // Min 8 characters
+		password.length <= 8 || // Min 8 characters
 		!/^[\x00-\x7F]*$/.test(password) // ASCII only (we could allow unicode here, but want to prevent users from having to do copy&paste shenanigans)
 	) {
 		return false

@@ -24,7 +24,17 @@ import { AgeFromDate } from 'age-calculator'
 
 export const post: Handler = async (req, res) => {
 
-	const email = req.body.email.trim()
+	// I know this doesn't do anything in reality as people can just not send a key here, but maybe it confuses someone
+	if (req.bot) {
+		res.status(403).json({
+			status: 'ERROR',
+			error: 'USER_ONLY',
+			message: 'This endpoint is only available to users'
+		})
+		return
+	}
+
+	const email = req.body.email.trim().toLowerCase()
 	const username = req.body.username.trim()
 	let password = req.body.password.trim()
 	const dateOfBirth = req.body.dateOfBirth
@@ -108,14 +118,14 @@ export const post: Handler = async (req, res) => {
 				emailVerified: false,
 				verificationCode,
 				passwordHash,
-				admin: (email.toLowerCase() == (<string>config.get('registration.default-admin')).toLowerCase()),
+				admin: (email == (<string>config.get('registration.default-admin')).toLowerCase()),
 				reputation: 0
 			})
 				.then(() => {
 
 					sendMail(email, 'verification', {
 						username,
-						link: config.get('client-url') + `/verify-mail/${verificationCode}`
+						link: config.get('client-url') + `/signup/verify-mail?code=${verificationCode}`
 					})
 					res.json({
 						status: 'SUCCESS'

@@ -23,6 +23,15 @@ import mongo from '@util/mongo'
 
 export const post: Handler = async (req, res) => {
 
+	if (req.bot) {
+		res.status(403).json({
+			status: 'ERROR',
+			error: 'USER_ONLY',
+			message: 'This endpoint is only available to users'
+		})
+		return
+	}
+
 	if (!req.body.email) {
 		res.status(403).json({
 			status: 'ERROR',

@@ -26,7 +26,8 @@ export const verifyMail = (email: string) => {
 		email == '' ||
 		(email.match(/@/g) || []).length != 1 || // Checks if "@" occurs exactly once
 		email.split('@')[0] == '' ||
-		email.split('@')[1] == ''
+		email.split('@')[1] == '' ||
+		!email.split('@')[1].includes('.')
 	) {
 		return false
 	}

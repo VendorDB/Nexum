@@ -17,9 +17,10 @@ import { Request } from 'express'
 import { User } from './global'
 
 declare global {
-  namespace Express {
-    interface Request {
-      user: User;
-    }
-  }
+	namespace Express {
+		interface Request {
+			user: User;
+			bot: boolean;
+		}
+	}
 }

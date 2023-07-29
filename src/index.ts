@@ -20,11 +20,21 @@ import cookieParser from 'cookie-parser'
 import config from 'config'
 import path from 'path'
 import AuthMiddleware from '@middleware/auth'
+import rateLimit from 'express-rate-limit'
+import cors from 'cors'
 
 const app = express()
 
 async function init() {
 
+	app.use('/api/v*/user/resend-verification', rateLimit({
+		windowMs: 15 * 60 * 1000, // 15 minutes
+		max: 10, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
+		standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+		legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+	}))
+
+	app.use(cors())
 	app.use(express.json())
 	app.use(cookieParser())
 	app.use('/', AuthMiddleware)

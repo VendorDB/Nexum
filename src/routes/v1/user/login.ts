@@ -20,6 +20,15 @@ import bcrypt from 'bcrypt'
 
 export const post: Handler = async (req, res) => {
 
+	if (req.bot) {
+		res.status(403).json({
+			status: 'ERROR',
+			error: 'USER_ONLY',
+			message: 'This endpoint is only available to users'
+		})
+		return
+	}
+
 	if (!req.body.email) {
 		res.status(403).json({
 			status: 'ERROR',
@@ -74,7 +83,13 @@ export const post: Handler = async (req, res) => {
 	res.cookie('session', token, {
 		httpOnly: true
 	}).json({
-		status: 'SUCCESS'
+		status: 'SUCCESS',
+		user: {
+			_id: user._id.toString(),
+			username: user.username,
+			admin: user.admin,
+			email: user.email
+		}
 	})
 
 }
