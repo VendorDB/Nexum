@@ -2,6 +2,7 @@
 	"scripts": {
 		"start": "NODE_ENV=production node build/index.js",
 		"start:dev": "NODE_ENV=development nodemon",
+		"build": "npm run lint && rimraf ./build && npx tsc",
 		"lint": "npx eslint . --fix",
 		"bcrypt-rounds": "node scripts/bcrypt-rounds.js",
 		"jwt-secret": "node scripts/jwt-secret.js"
