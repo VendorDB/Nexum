@@ -22,8 +22,11 @@ import path from 'path'
 import AuthMiddleware from '@middleware/auth'
 import rateLimit from 'express-rate-limit'
 import cors from 'cors'
+import { Request, Response } from 'express'
 
 const app = express()
+
+app.set('trust proxy', '127.0.0.1')
 
 async function init() {
 
@@ -32,6 +35,14 @@ async function init() {
 		max: 10, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
 		standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
 		legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+		message: async (req: Request, res: Response) => {
+			res.setHeader('content-type', 'application/json')
+			return {
+				status: 'ERROR',
+				error: 'TOO_MANY_REQUESTS',
+				message: 'You\'re doing this too often'
+			}
+		}
 	}))
 
 	app.use(cors())
