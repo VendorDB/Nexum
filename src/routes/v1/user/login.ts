@@ -81,7 +81,8 @@ export const post: Handler = async (req, res) => {
 	const token = generateJWT(user._id.toString(), 'USER', { expiresIn: '3d' })
 
 	res.cookie('session', token, {
-		httpOnly: true
+		httpOnly: true,
+		secure: true
 	}).json({
 		status: 'SUCCESS',
 		user: {
