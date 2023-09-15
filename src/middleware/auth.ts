@@ -21,11 +21,16 @@ import { Request, Response, NextFunction } from 'express'
 
 export default async (req: Request, res: Response, next: NextFunction) => {
 
-	const token = req.cookies.session || req.headers['authorization']
+	let token: string = req.cookies.session || req.headers['authorization']
 
 	if (token == null) {
 		next()
 		return
+	}
+
+	// Remove any token types. They don't matter to us, everything is a bearer token here.
+	if(token.includes(' ')){
+		token = token.split(' ')[1]
 	}
 
 	let data: JwtPayload

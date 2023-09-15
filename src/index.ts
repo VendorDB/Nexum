@@ -23,6 +23,7 @@ import AuthMiddleware from '@middleware/auth'
 import rateLimit from 'express-rate-limit'
 import cors from 'cors'
 import { Request, Response } from 'express'
+import PermMiddleware from '@middleware/perms'
 
 const app = express()
 
@@ -46,9 +47,11 @@ async function init() {
 	}))
 
 	app.use(cors())
-	app.use(express.json())
+	app.use(express.json({limit: '50mb'}))
 	app.use(cookieParser())
 	app.use('/', AuthMiddleware)
+	app.use('/api/v*/admin/*', PermMiddleware.admin)
+	app.use('/api/v*/moderation/*', PermMiddleware.moderator)
 	app.use(config.get('path-prefix'), await router({
 		directory: path.join(__dirname, 'routes')
 	}))

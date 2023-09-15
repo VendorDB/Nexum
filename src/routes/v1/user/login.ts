@@ -17,6 +17,7 @@ import { Handler } from 'express'
 import { generateJWT } from '@util/user'
 import mongo from '@util/mongo'
 import bcrypt from 'bcrypt'
+import { getDefaultPicture } from '@util/misc'
 
 export const post: Handler = async (req, res) => {
 
@@ -80,6 +81,10 @@ export const post: Handler = async (req, res) => {
 
 	const token = generateJWT(user._id.toString(), 'USER', { expiresIn: '3d' })
 
+	if(!user.profile_picture){
+		user.profile_picture = getDefaultPicture()
+	}
+
 	res.cookie('session', token, {
 		httpOnly: true,
 		secure: true
@@ -89,7 +94,8 @@ export const post: Handler = async (req, res) => {
 			_id: user._id.toString(),
 			username: user.username,
 			admin: user.admin,
-			email: user.email
+			email: user.email,
+			profile_picture: user.profile_picture
 		}
 	})
 

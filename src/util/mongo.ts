@@ -101,6 +101,45 @@ export const aggregate = (collection: string, pipeline: any[]) => {
 	})
 }
 
+export const aggregateWithCount = (collection: string, pipeline: any[]) => {
+	return new Promise<[any[], number]>(async (resolve, reject) => {
+		const aggregationCursor = await db.collection(collection).aggregate(pipeline)
+		const vendors = await aggregationCursor.toArray()
+
+		const countPipeline = pipeline.slice() // Create a copy of the pipeline to calculate total count
+
+		// Find and remove $limit and $skip stages if they exist
+		const limitIndex = countPipeline.findIndex(stage => stage.$limit !== undefined)
+		if (limitIndex !== -1) {
+			countPipeline.splice(limitIndex, 1)
+		}
+
+		const skipIndex = countPipeline.findIndex(stage => stage.$skip !== undefined)
+		if (skipIndex !== -1) {
+			countPipeline.splice(skipIndex, 1)
+		}
+
+		countPipeline.push({ $count: 'count' })
+
+		const countResult = await db.collection(collection).aggregate(countPipeline).toArray()
+		const totalCount = countResult.length > 0 ? countResult[0].count : 0
+
+		resolve([vendors, totalCount])
+	})
+}
+
+export const count = (collection: string, query?: any) => {
+	return new Promise<number>((resolve, reject) => {
+		db.collection(collection).countDocuments()
+			.then(x => {
+				resolve(x)
+			})
+			.catch(err => {
+				reject(err)
+			})
+	})
+}
+
 export default {
 	insert,
 	query,
@@ -108,5 +147,7 @@ export default {
 	remove,
 	update,
 	updatePush,
-	aggregate
+	aggregate,
+	aggregateWithCount,
+	count
 }

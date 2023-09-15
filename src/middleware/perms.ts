@@ -13,34 +13,39 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import { Handler } from 'express'
-import mongo from '@util/mongo'
+import { Request, Response, NextFunction } from 'express'
 
-export const post: Handler = async (req, res) => {
-	if (!req.user || !req.user.admin) {
+const admin = async (req: Request, res: Response, next: NextFunction) => {
+
+	if(!req.user || !req.user.admin){
 		res.status(401).json({
 			status: 'ERROR',
 			error: 'UNAUTHORIZED',
-			message: 'This function is only available to administrators'
+			message: 'You need to be an administrator to access this'
 		})
 		return
 	}
 
-	const name = req.body.name
-	const url = req.body.url
-	const logo = req.body.logo
-	const description = req.body.description
+	next()
 
-	mongo.insert('Vendors', {
-		name,
-		url,
-		logo,
-		description
-	})
-		.then(() => {
-			res.json({
-				status: 'SUCCESS'
-			})
+}
+
+const moderator = async (req: Request, res: Response, next: NextFunction) => {
+
+	if(!req.user || (!req.user.moderator && !req.user.admin)){
+		res.status(401).json({
+			status: 'ERROR',
+			error: 'UNAUTHORIZED',
+			message: 'You need to be a moderator or admin to access this'
 		})
+		return
+	}
 
+	next()
+
+}
+
+export default {
+	admin,
+	moderator
 }

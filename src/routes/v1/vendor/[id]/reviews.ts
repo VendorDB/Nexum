@@ -28,9 +28,6 @@ export const get: Handler = async (req, res) => {
 	const sortField: SortField = req.query.sort as SortField || 'created' // Default sorting by creation date
 	const sortOrder = req.query.order === 'desc' ? -1 : 1
 
-	console.log(sortOrder + ' | ' + typeof sortOrder)
-	console.log(sortField + ' | ' + typeof sortField)
-
 	const filter = { _id: new ObjectId(req.params.id) }
 
 	const sorting = {
@@ -125,6 +122,11 @@ export const post: Handler = async (req, res) => {
 		// Increase reputation on published reviews
 		mongo.update('Users', { _id: user._id }, {
 			reputation: user.reputation + 1
+		})
+
+		mongo.update('Vendors', {_id: vendor._id}, {
+			stars: vendor.stars + stars,
+			starsAverage: (vendor.stars + stars) / (vendor.reviews.length + 1)
 		})
 
 		await mongo.updatePush('Vendors', { _id: new ObjectId(req.params.id) }, {

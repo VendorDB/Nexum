@@ -28,6 +28,8 @@ declare global {
 		admin: boolean;
 		reputation: number;
 		recoveryCode?: string;
+		profile_picture: string;
+		about: string;
 	}
 
 	interface Review {
@@ -52,7 +54,25 @@ declare global {
 		logo: string;
 		description: string;
 		reviews: Review[];
-		owner?: string;
+		owner: string;
+		stars: number;
+		starsAverage: number;
+		products?: Product[];
+		shipping?: ShippingList
+	}
+
+	interface Product {
+		type: 'substance' | 'accessory' | 'merch' | 'other';
+		name: string;
+		description?: string;
+		url: string;
+		wiki?: string;
+		shipping?: ShippingList
+	}
+
+	interface ShippingList {
+		blacklist?: string[],
+		whitelist?: string[]
 	}
 
 }

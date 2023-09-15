@@ -13,28 +13,13 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import { Handler } from 'express'
-import { getDefaultPicture } from '@util/misc'
+import { readFileSync } from 'fs'
 
-export const get: Handler = async (req, res) => {
+let defaultPicture: string
 
-	const user = req.user
-
-	if (!user) {
-		res.status(401).json({
-			status: 'ERROR',
-			error: 'UNAUTHORIZED',
-			message: 'Please log in first'
-		})
-		return
+export const getDefaultPicture = () => {
+	if(!defaultPicture){
+		defaultPicture = 'data:image/png;base64,' + readFileSync('./assets/default_profile_picture.png').toString('base64')
 	}
-
-	delete user.passwordHash
-	delete user.verificationCode
-
-	if(!user.profile_picture){
-		user.profile_picture = getDefaultPicture()
-	}
-
-	res.json(req.user)
+	return defaultPicture
 }

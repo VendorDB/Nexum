@@ -20,15 +20,26 @@ export const post: Handler = async (req, res) => {
 
 	const data = req.body
 
-	const pipeline = buildAggregationPipeline(data)
-	const vendors = await mongo.aggregate('Vendors', pipeline)
+	const page = parseInt(req.query.page as string) || 1
+	const limit = parseInt(req.query.limit as string) || 10
 
-	res.json(vendors)
+	const pipeline = buildAggregationPipeline(data, page, limit)
+	const [vendors, totalCount] = await mongo.aggregateWithCount('Vendors', pipeline)
+
+	const totalPages = Math.ceil(totalCount / limit)
+
+	res.json({
+		vendors,
+		page,
+		limit,
+		totalPages,
+		totalCount,
+	})
 
 }
 
 
-function buildAggregationPipeline(data: any) {
+function buildAggregationPipeline(data: any, page: number, limit: number) {
 	const pipeline = []
 
 	// Match stage for filtering based on name
@@ -158,8 +169,11 @@ function buildAggregationPipeline(data: any) {
 		pipeline.push({ $sort: sortObj })
 	}
 
-	// Optional: Project stage to shape the output (include only specific fields)
-	// pipeline.push({ $project: { name: 1, description: 1, reviews: 1, shippingTo: 1 } });
+	// Pagination: Add $skip and $limit stages
+	const skip = (page - 1) * limit
+	pipeline.push({ $skip: skip })
+	pipeline.push({ $limit: limit })
+
 
 	return pipeline
 }
