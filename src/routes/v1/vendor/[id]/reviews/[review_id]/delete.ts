@@ -14,7 +14,8 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import { Handler } from 'express'
-import { getDefaultPicture } from '@util/misc'
+import mongo from '@util/mongo'
+import { ObjectId } from 'mongodb'
 
 export const get: Handler = async (req, res) => {
 
@@ -29,14 +30,40 @@ export const get: Handler = async (req, res) => {
 		return
 	}
 
-	user.passwordHash = '<redacted>'
-	user.verificationCode = '<redacted>'
-	user.apiKey = '<redacted>'
-	user.totpSecret = '<redacted>'
-
-	if(!user.profile_picture){
-		user.profile_picture = getDefaultPicture()
+	if (!user.admin && !user.moderator) {
+		res.status(401).json({
+			status: 'ERROR',
+			error: 'UNAUTHORIZED',
+			message: 'You are not allowed to do this'
+		})
+		return
 	}
 
-	res.json(req.user)
+	const review = <Review>await mongo.queryOne('Reviews', { _id: req.params.review_id })
+
+	if (!review) {
+		res.status(404).json({
+			status: 'ERROR',
+			error: 'NOT_FOUND',
+			message: 'There is no review with the provided ID'
+		})
+		return
+	}
+
+	const author = <User>await mongo.queryOne('Users', { _id: review.author._id })
+	const vendor = <Vendor>await mongo.queryOne('Vendors', { _id: review.vendor })
+
+	mongo.update('Users', { _id: author._id }, { reputation: author.reputation - 1 })
+	mongo.update('Vendors', { _id: vendor._id }, {
+		stars: vendor.stars - review.stars,
+		reviewAmount: vendor.reviewAmount - 1
+	})
+
+	mongo.remove('Reviews', { _id: new ObjectId(req.params.review_id) })
+		.then(() => {
+			res.json({
+				status: 'SUCCESS'
+			})
+		})
+
 }

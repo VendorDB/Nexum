@@ -25,22 +25,29 @@ declare global {
 		emailVerified: boolean;
 		verificationCode: string;
 		passwordHash: string;
-		admin: boolean;
+		perms: number;
 		reputation: number;
 		recoveryCode?: string;
 		profile_picture: string;
 		about: string;
+		lastReviewPosted: number;
+		totpEnabled?: boolean;
+		totpSecret?: string;
 	}
 
 	interface Review {
+		_id?: string;
 		stars: number;
 		message: string;
 		attachments: Attachment[];
 		created: number;
 		author: {
+			_id: string;
 			username: string;
-			id: string;
 		}
+		isHeld: boolean;
+		vendor: string;
+		likes: string[];
 	}
 
 	interface Attachment {
@@ -53,12 +60,22 @@ declare global {
 		url: string;
 		logo: string;
 		description: string;
-		reviews: Review[];
 		owner: string;
 		stars: number;
+		reviewAmount: number;
 		starsAverage: number;
 		products?: Product[];
 		shipping?: ShippingList
+	}
+
+	interface VendorRequest {
+		name: string;
+		url: string;
+		author: {
+			_id: string;
+			username: string;
+		}
+		created: number;
 	}
 
 	interface Product {

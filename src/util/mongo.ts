@@ -93,6 +93,13 @@ export const remove = (collection: string, query: any) => {
 	})
 }
 
+export const removeAll = (collection: string, query: any) => {
+	return new Promise<object>((resolve, reject) => {
+		db.collection(collection).deleteMany(query)
+			.then(res => resolve(res))
+	})
+}
+
 export const aggregate = (collection: string, pipeline: any[]) => {
 	return new Promise<object[]>((resolve, reject) => {
 		db.collection(collection).aggregate(pipeline).toArray()
@@ -104,7 +111,7 @@ export const aggregate = (collection: string, pipeline: any[]) => {
 export const aggregateWithCount = (collection: string, pipeline: any[]) => {
 	return new Promise<[any[], number]>(async (resolve, reject) => {
 		const aggregationCursor = await db.collection(collection).aggregate(pipeline)
-		const vendors = await aggregationCursor.toArray()
+		const result = await aggregationCursor.toArray()
 
 		const countPipeline = pipeline.slice() // Create a copy of the pipeline to calculate total count
 
@@ -124,7 +131,7 @@ export const aggregateWithCount = (collection: string, pipeline: any[]) => {
 		const countResult = await db.collection(collection).aggregate(countPipeline).toArray()
 		const totalCount = countResult.length > 0 ? countResult[0].count : 0
 
-		resolve([vendors, totalCount])
+		resolve([result, totalCount])
 	})
 }
 
@@ -145,6 +152,7 @@ export default {
 	query,
 	queryOne,
 	remove,
+	removeAll,
 	update,
 	updatePush,
 	aggregate,

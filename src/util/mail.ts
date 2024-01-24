@@ -16,10 +16,12 @@
 import config from 'config'
 import pug from 'pug'
 import nodemailer from 'nodemailer'
+import mongo from './mongo'
+import { createHash } from 'crypto'
 
 const mailTransporter = nodemailer.createTransport(config.get('mail.smtp'))
 
-export const verifyMail = (email: string) => {
+export const verifyMail = async (email: string) => {
 
 	// Check whether email is properly formatted
 	if (
@@ -29,6 +31,11 @@ export const verifyMail = (email: string) => {
 		email.split('@')[1] == '' ||
 		!email.split('@')[1].includes('.')
 	) {
+		return false
+	}
+
+	const hashedEmail = createHash('sha256').update(email).digest('base64')
+	if (await mongo.queryOne('Bans', { email: hashedEmail })) {
 		return false
 	}
 

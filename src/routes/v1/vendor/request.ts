@@ -1,4 +1,4 @@
-// Copyright (C) 2023 Marcus Huber (xenorio) <dev@xenorio.xyz>
+// Copyright (C) 2024 Marcus Huber (xenorio) <dev@xenorio.xyz>
 // 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
@@ -13,39 +13,36 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import { Request, Response, NextFunction } from 'express'
+import { Handler } from 'express'
+import mongo from '@util/mongo'
 
-const admin = async (req: Request, res: Response, next: NextFunction) => {
-
-	if(!req.user || !req.user.perms || req.user.perms < 2){
+export const post: Handler = async (req, res) => {
+	if (!req.user) {
 		res.status(401).json({
 			status: 'ERROR',
 			error: 'UNAUTHORIZED',
-			message: 'You need to be an administrator to access this'
+			message: 'You must be logged in to do this'
 		})
 		return
 	}
 
-	next()
+	const request = <VendorRequest> req.body
 
-}
-
-const moderator = async (req: Request, res: Response, next: NextFunction) => {
-
-	if(!req.user || !req.user.perms || req.user.perms < 1){
-		res.status(401).json({
-			status: 'ERROR',
-			error: 'UNAUTHORIZED',
-			message: 'You need to be a moderator or admin to access this'
-		})
-		return
+	request.author = {
+		_id: req.user._id.toString(),
+		username: req.user.username
 	}
+	request.created = Date.now()
 
-	next()
+	mongo.insert('VendorRequests', {
+		name: request.name,
+		url: request.url,
+		author: request.author,
+		created: request.created
+	})
 
-}
+	res.json({
+		status: 'SUCCESS'
+	})
 
-export default {
-	admin,
-	moderator
 }

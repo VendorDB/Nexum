@@ -1,4 +1,4 @@
-// Copyright (C) 2023 Marcus Huber (xenorio) <dev@xenorio.xyz>
+// Copyright (C) 2024 Marcus Huber (xenorio) <dev@xenorio.xyz>
 // 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
@@ -13,39 +13,29 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import { Request, Response, NextFunction } from 'express'
+import { Handler } from 'express'
+import mongo from '@util/mongo'
+import { ObjectId } from 'mongodb'
 
-const admin = async (req: Request, res: Response, next: NextFunction) => {
+export const get: Handler = async (req, res) => {
 
-	if(!req.user || !req.user.perms || req.user.perms < 2){
+	const user = req.user
+
+	if (!user) {
 		res.status(401).json({
 			status: 'ERROR',
 			error: 'UNAUTHORIZED',
-			message: 'You need to be an administrator to access this'
+			message: 'Please log in first'
 		})
 		return
 	}
 
-	next()
+	mongo.remove('Users', {_id: new ObjectId(req.user._id)})
 
-}
+	mongo.removeAll('Reviews', {'author._id': req.user._id.toString()})
 
-const moderator = async (req: Request, res: Response, next: NextFunction) => {
+	res.json({
+		status: 'SUCCESS'
+	})
 
-	if(!req.user || !req.user.perms || req.user.perms < 1){
-		res.status(401).json({
-			status: 'ERROR',
-			error: 'UNAUTHORIZED',
-			message: 'You need to be a moderator or admin to access this'
-		})
-		return
-	}
-
-	next()
-
-}
-
-export default {
-	admin,
-	moderator
 }

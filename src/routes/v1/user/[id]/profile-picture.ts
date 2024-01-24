@@ -13,39 +13,28 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import { Request, Response, NextFunction } from 'express'
+import { Handler } from 'express'
+import { getDefaultPicture } from '@util/misc'
+import mongo from '@util/mongo'
+import { ObjectId } from 'mongodb'
 
-const admin = async (req: Request, res: Response, next: NextFunction) => {
+export const get: Handler = async (req, res) => {
 
-	if(!req.user || !req.user.perms || req.user.perms < 2){
-		res.status(401).json({
+	const user = <User | null> await mongo.queryOne('Users', {_id: new ObjectId(req.params.id)})
+
+	if (!user) {
+		res.status(404).json({
 			status: 'ERROR',
-			error: 'UNAUTHORIZED',
-			message: 'You need to be an administrator to access this'
+			error: 'NOT_FOUND',
+			message: 'There is no user with this ID'
 		})
 		return
 	}
 
-	next()
+	const picture = user.profile_picture || getDefaultPicture()
 
-}
-
-const moderator = async (req: Request, res: Response, next: NextFunction) => {
-
-	if(!req.user || !req.user.perms || req.user.perms < 1){
-		res.status(401).json({
-			status: 'ERROR',
-			error: 'UNAUTHORIZED',
-			message: 'You need to be a moderator or admin to access this'
-		})
-		return
-	}
-
-	next()
-
-}
-
-export default {
-	admin,
-	moderator
+	res.json({
+		status: 'SUCCESS',
+		picture
+	})
 }

@@ -48,7 +48,7 @@ export const post: Handler = async (req, res) => {
 			return
 		}
 
-		if (await mongo.queryOne('Users', { username: req.body.username })) {
+		if (req.body.username != req.user.username &&await mongo.queryOne('Users', { username: req.body.username })) {
 			res.status(403).json({
 				status: 'ERROR',
 				error: 'USER_EXISTS',
@@ -90,21 +90,18 @@ function isValidBase64Image(base64String: string): boolean {
 	const base64Regex = /^data:image\/(jpeg|png|gif|bmp);base64,([A-Za-z0-9+/=])+$/
 
 	if (!base64Regex.test(base64String)) {
-		console.log('no match')
 		return false
 	}
 
 	// Check if the base64 string is properly padded
 	const paddingIndex = base64String.indexOf('=')
 	if (paddingIndex !== -1 && paddingIndex !== base64String.length - 1 && paddingIndex !== base64String.length - 2) {
-		console.log('shit pad')
 		return false
 	}
 
 	// Check if the base64 string length is divisible by 4
 	const base64StringLength = base64String.split('base64,')[1].length
 	if (base64StringLength % 4 !== 0) {
-		console.log('shit length')
 		return false
 	}
 
@@ -114,7 +111,6 @@ function isValidBase64Image(base64String: string): boolean {
 		const image = sharp(buffer) // Use a library like "sharp" to process the image data
 		return true
 	} catch (error) {
-		console.log('sharp acts up')
 		return false
 	}
 }

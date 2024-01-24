@@ -16,11 +16,12 @@
 import { Handler } from 'express'
 import mongo from '@util/mongo'
 import { ObjectId } from 'mongodb'
+import config from 'config'
+import ms from 'ms'
 
 type SortField = 'created' | 'stars'
 
 export const get: Handler = async (req, res) => {
-
 	const pageSize = parseInt(<string>req.query.limit) || 25
 	const pageNumber = parseInt(<string>req.query.page) || 1
 	const skipItems = (pageNumber - 1) * pageSize
@@ -28,44 +29,33 @@ export const get: Handler = async (req, res) => {
 	const sortField: SortField = req.query.sort as SortField || 'created' // Default sorting by creation date
 	const sortOrder = req.query.order === 'desc' ? -1 : 1
 
-	const filter = { _id: new ObjectId(req.params.id) }
+	const filter: any = { vendor: new ObjectId(req.params.id) }
 
-	const sorting = {
-		[sortField]: sortOrder,
-	} as { [key in SortField]: number }
-
-	sorting[sortField] = sortOrder
+	if (req.user && (req.user.moderator || req.user.admin) && req.query.held) {
+		filter['isHeld'] = true
+	} else {
+		filter['isHeld'] = false
+	}
 
 	const pipeline = [
 		{ $match: filter },
-		{ $unwind: '$reviews' }, // Unwind the reviews array
-		{
-			$project: {
-				_id: 0, // Exclude the _id field from the output
-				reviews: 1 // Include only the reviews field in the output
-			}
-		},
-		{
-			$replaceRoot: { newRoot: '$reviews' } // Promote the "reviews" field to the root level
-		},
-		{ $sort: { [sortField]: sortOrder } }, // Sort the reviews directly using field name and order
+		{ $sort: { [sortField]: sortOrder, _id: 1 } }, // Sort the reviews directly using field name and order
 		{ $skip: skipItems }, // Apply pagination with $skip
 		{ $limit: pageSize }, // Apply pagination with $limit
 	]
 
-	const result = <Review[]>(await mongo.aggregate('Vendors', pipeline))
+	const result = <Review[]>(await mongo.aggregate('Reviews', pipeline))
 
-	if (!result) {
+	if (!result || result.length === 0) {
 		res.status(404).json({
 			status: 'ERROR',
 			error: 'NOT_FOUND',
-			message: 'The provided ID is invalid, or reviews have not yet been initialized'
+			message: 'No reviews found for the provided vendor ID',
 		})
 		return
 	}
 
 	res.json(result)
-
 }
 
 export const post: Handler = async (req, res) => {
@@ -76,6 +66,15 @@ export const post: Handler = async (req, res) => {
 			status: 'ERROR',
 			error: 'UNAUTHORIZED',
 			message: 'Please log in first'
+		})
+		return
+	}
+
+	if (user.perms != 2 && user.lastReviewPosted > Date.now() - ms(<string>config.get('review-delay'))) {
+		res.status(401).json({
+			status: 'ERROR',
+			error: 'REVIEW_DELAY',
+			message: 'You already posted a review in the last ' + config.get('review-delay')
 		})
 		return
 	}
@@ -91,15 +90,31 @@ export const post: Handler = async (req, res) => {
 		return
 	}
 
-	const stars = req.body.stars
+	let stars = Math.floor(req.body.stars)
 	const message = req.body.message
 	const attachments = req.body.attachments
+
+	if (message.length > 2500) {
+		res.status(401).json({
+			status: 'ERROR',
+			error: 'TOO_LONG',
+			message: 'The maximum review length is 2500 characters'
+		})
+		return
+	}
+
+	// Prevent tomfoolery
+	if (stars > 5) {
+		stars = 5
+	} else if (stars < 1) {
+		stars = 1
+	}
 
 	// Calculate the likelihood to be held for moderator review
 	// If reputation < 1: Always true
 	// If reputation >= 1: For each reputation, gain 1% chance of instant publishing, up to 75%
-	//const isHeld = user.reputation > 0 ? Math.random() <= Math.min(user.reputation / 100, 0.75) : true
-	const isHeld = false
+	const isHeld = user.reputation > 0 ? Math.random() >= Math.min(user.reputation / 100, 0.75) : true
+	//const isHeld = false
 
 	const review: Review = {
 		stars,
@@ -107,41 +122,29 @@ export const post: Handler = async (req, res) => {
 		attachments,
 		created: Date.now(),
 		author: {
-			username: req.user.username,
-			id: req.user._id.toString()
-		}
+			_id: req.user._id.toString(),
+			username: req.user.username
+		},
+		isHeld,
+		vendor: vendor._id,
+		likes: []
 	}
 
-	if (isHeld) {
-		mongo.insert('HeldReviews', {
-			vendor: vendor._id,
-			review
-		})
-	} else {
+	//console.log(await mongo.query('Reviews', {vendor: vendor._id}))
 
-		// Increase reputation on published reviews
-		mongo.update('Users', { _id: user._id }, {
-			reputation: user.reputation + 1
-		})
+	mongo.insert('Reviews', review)
 
-		mongo.update('Vendors', {_id: vendor._id}, {
+	if (!isHeld) {
+		mongo.update('Vendors', { _id: vendor._id }, {
 			stars: vendor.stars + stars,
-			starsAverage: (vendor.stars + stars) / (vendor.reviews.length + 1)
-		})
-
-		await mongo.updatePush('Vendors', { _id: new ObjectId(req.params.id) }, {
-			reviews: {
-				stars,
-				message,
-				attachments,
-				created: Date.now(),
-				author: {
-					username: req.user.username,
-					id: req.user._id.toString()
-				}
-			}
+			reviewAmount: vendor.reviewAmount + 1,
+			averageRating: (vendor.stars + stars) / (vendor.reviewAmount + 1)
 		})
 	}
+
+	mongo.update('Users', { _id: user._id }, {
+		lastReviewPosted: Date.now()
+	})
 
 	res.json({
 		status: 'SUCCESS',

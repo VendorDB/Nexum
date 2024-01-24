@@ -1,4 +1,4 @@
-// Copyright (C) 2023 Marcus Huber (xenorio) <dev@xenorio.xyz>
+// Copyright (C) 2024 Marcus Huber (xenorio) <dev@xenorio.xyz>
 // 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
@@ -13,39 +13,42 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import { Request, Response, NextFunction } from 'express'
+import { Handler } from 'express'
+import mongo from '@util/mongo'
 
-const admin = async (req: Request, res: Response, next: NextFunction) => {
-
-	if(!req.user || !req.user.perms || req.user.perms < 2){
+export const post: Handler = async (req, res) => {
+	if (!req.user) {
 		res.status(401).json({
 			status: 'ERROR',
 			error: 'UNAUTHORIZED',
-			message: 'You need to be an administrator to access this'
+			message: 'You must be logged in to do this'
 		})
 		return
 	}
 
-	next()
+	const vendor = <Vendor>await mongo.queryOne('Vendors', { _id: req.params.id })
 
-}
-
-const moderator = async (req: Request, res: Response, next: NextFunction) => {
-
-	if(!req.user || !req.user.perms || req.user.perms < 1){
-		res.status(401).json({
+	if (!vendor) {
+		res.status(404).json({
 			status: 'ERROR',
-			error: 'UNAUTHORIZED',
-			message: 'You need to be a moderator or admin to access this'
+			error: 'NOT_FOUND',
+			message: 'There is no vendor with the provided ID'
 		})
 		return
 	}
 
-	next()
+	mongo.insert('VendorReports', {
+		reason: req.body.reason,
+		message: req.body.message,
+		author: {
+			username: req.user.username,
+			_id: req.user._id
+		},
+		created: Date.now()
+	})
 
-}
+	res.json({
+		status: 'SUCCESS'
+	})
 
-export default {
-	admin,
-	moderator
 }

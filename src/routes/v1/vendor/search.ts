@@ -51,7 +51,7 @@ function buildAggregationPipeline(data: any, page: number, limit: number) {
 	if (data.minAverageRating) {
 		pipeline.push({
 			$match: {
-				$expr: { $gte: [{ $avg: '$reviews.stars' }, data.minAverageRating] },
+				$expr: { $gte: ['$averageRating', data.minAverageRating] },
 			},
 		})
 	}

@@ -13,39 +13,50 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import { Request, Response, NextFunction } from 'express'
+import { Handler } from 'express'
+import mongo from '@util/mongo'
+import { ObjectId } from 'mongodb'
 
-const admin = async (req: Request, res: Response, next: NextFunction) => {
+export const get: Handler = async (req, res) => {
 
-	if(!req.user || !req.user.perms || req.user.perms < 2){
+	const user = req.user
+
+	if (!user) {
 		res.status(401).json({
 			status: 'ERROR',
 			error: 'UNAUTHORIZED',
-			message: 'You need to be an administrator to access this'
+			message: 'Please log in first'
 		})
 		return
 	}
 
-	next()
+	const review = <Review> await mongo.queryOne('Reviews', { _id: req.params.review_id })
 
-}
-
-const moderator = async (req: Request, res: Response, next: NextFunction) => {
-
-	if(!req.user || !req.user.perms || req.user.perms < 1){
-		res.status(401).json({
+	if (!review) {
+		res.status(404).json({
 			status: 'ERROR',
-			error: 'UNAUTHORIZED',
-			message: 'You need to be a moderator or admin to access this'
+			error: 'NOT_FOUND',
+			message: 'There is no review with the provided ID'
 		})
 		return
 	}
 
-	next()
+	const likes = review.likes || []
 
-}
+	if(likes.includes(user._id.toString())){
+		res.status(401).json({
+			status: 'ERROR',
+			error: 'ALREADY_LIKED',
+			message: 'You have already liked this review'
+		})
+		return
+	}
 
-export default {
-	admin,
-	moderator
+	mongo.updatePush('Reviews', { _id: new ObjectId(req.params.review_id) }, {likes: user._id.toString()})
+		.then(() => {
+			res.json({
+				status: 'SUCCESS'
+			})
+		})
+
 }

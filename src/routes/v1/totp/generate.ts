@@ -1,4 +1,4 @@
-// Copyright (C) 2023 Marcus Huber (xenorio) <dev@xenorio.xyz>
+// Copyright (C) 2024 Marcus Huber (xenorio) <dev@xenorio.xyz>
 // 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
@@ -14,36 +14,28 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import { Handler } from 'express'
-import mongo from '@util/mongo'
-import { getDefaultPicture } from '@util/misc'
+import authenticator from 'otpauth'
 
-export const post: Handler = async (req, res) => {
+export const get: Handler = async (req, res) => {
 
-	const name = req.body.name || 'Unnamed Vendor'
-	const url = req.body.url
-	const logo = req.body.logo || getDefaultPicture()
-	const description = req.body.description
-	const products = req.body.products
-	const shipping = req.body.shipping
-	const owner = req.body.owner || 'system'
+	const secret = (new authenticator.Secret()).base32
 
-	mongo.insert('Vendors', {
-		name,
-		url,
-		logo,
-		description,
-		stars: 0,
-		reviewAmount: 0,
-		starsAverage: 0,
-		owner,
-		shipping,
-		products
+	const totp = new authenticator.TOTP({
+		issuer: 'VendorDB',
+		label: req.user.email,
+		algorithm: 'SHA1',
+		digits: 6,
+		period: 30,
+		secret
 	})
-		.then((data: any) => {
-			res.json({
-				status: 'SUCCESS',
-				id: data._id
-			})
-		})
+
+	// const secret = authenticator.generateSecret()
+	// const uri = authenticator.keyuri(<string>req.query.accountName, 'VendorDB', secret)
+
+	res.json({
+		status: 'SUCCESS',
+		secret,
+		uri: totp.toString()
+	})
 
 }

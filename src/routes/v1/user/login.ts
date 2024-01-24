@@ -18,6 +18,7 @@ import { generateJWT } from '@util/user'
 import mongo from '@util/mongo'
 import bcrypt from 'bcrypt'
 import { getDefaultPicture } from '@util/misc'
+import authenticator from 'otpauth'
 
 export const post: Handler = async (req, res) => {
 
@@ -79,6 +80,34 @@ export const post: Handler = async (req, res) => {
 		return
 	}
 
+	if(user.totpEnabled) {
+		if(!req.body.totp) {
+			res.status(403).json({
+				status: 'ERROR',
+				error: 'TOTP_REQUIRED',
+				message: 'This account requires a TOTP token'
+			})
+			return
+		}
+
+		const totp = new authenticator.TOTP({
+			algorithm: 'SHA1',
+			digits: 6,
+			period: 30,
+			secret: user.totpSecret
+		})
+
+		if(totp.validate({token: req.body.totp, window: 1}) == null) {
+			res.status(403).json({
+				status: 'ERROR',
+				error: 'TOTP_INVALID',
+				message: 'The provided TOTP token is invalid'
+			})
+			return
+		}
+
+	}
+
 	const token = generateJWT(user._id.toString(), 'USER', { expiresIn: '3d' })
 
 	if(!user.profile_picture){
@@ -93,7 +122,7 @@ export const post: Handler = async (req, res) => {
 		user: {
 			_id: user._id.toString(),
 			username: user.username,
-			admin: user.admin,
+			perms: user.perms,
 			email: user.email,
 			profile_picture: user.profile_picture
 		}

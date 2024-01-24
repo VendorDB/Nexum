@@ -1,0 +1,23 @@
+doctype html
+html
+	head
+		meta(charset='UTF-8')
+		meta(name='viewport' content='width=device-width, initial-scale=1.0')
+		title Your VendorDB Account has been Banned
+		style
+			include style.css
+	body
+		div(class='container')
+			h2 Hey #{username}!
+			p We regret to inform you, that your VendorDB account has been deactivated by a moderator.
+			p 
+			p They have given the following reason:
+			p #{reason}
+			p 
+			p Please note, that we will be keeping an anonymized (hashed) copy of your e-mail address in order to enforce this deactivation.
+			p
+			p If you think this deactivation was done in error, feel free to reach out to us at bans@vendordb.info with your ban ID: #{banID}
+			p However, keep in mind that we will not be able to recover your account data, since it has been irrevokably deleted.
+			p
+			p Cheers,
+			p VendorDB

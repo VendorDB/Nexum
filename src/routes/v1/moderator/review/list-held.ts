@@ -1,4 +1,4 @@
-// Copyright (C) 2023 Marcus Huber (xenorio) <dev@xenorio.xyz>
+// Copyright (C) 2024 Marcus Huber (xenorio) <dev@xenorio.xyz>
 // 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
@@ -15,35 +15,22 @@
 
 import { Handler } from 'express'
 import mongo from '@util/mongo'
-import { getDefaultPicture } from '@util/misc'
 
-export const post: Handler = async (req, res) => {
+export const get: Handler = async (req, res) => {
+	
+	const pageSize = parseInt(<string>req.query.limit) || 25
+	const pageNumber = parseInt(<string>req.query.page) || 1
+	const skipItems = (pageNumber - 1) * pageSize
 
-	const name = req.body.name || 'Unnamed Vendor'
-	const url = req.body.url
-	const logo = req.body.logo || getDefaultPicture()
-	const description = req.body.description
-	const products = req.body.products
-	const shipping = req.body.shipping
-	const owner = req.body.owner || 'system'
+	const pipeline = []
 
-	mongo.insert('Vendors', {
-		name,
-		url,
-		logo,
-		description,
-		stars: 0,
-		reviewAmount: 0,
-		starsAverage: 0,
-		owner,
-		shipping,
-		products
-	})
-		.then((data: any) => {
-			res.json({
-				status: 'SUCCESS',
-				id: data._id
-			})
-		})
+	pipeline.push({ $match: {isHeld: true} })
+	pipeline.push({ $sort: { created: 1, _id: 1 } })
+	pipeline.push({ $skip: skipItems })
+	pipeline.push({ $limit: pageSize })
+
+	const reviews = <Review[]>(await mongo.aggregate('Reviews', pipeline))
+	
+	res.json(reviews)
 
 }

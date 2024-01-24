@@ -1,4 +1,4 @@
-// Copyright (C) 2023 Marcus Huber (xenorio) <dev@xenorio.xyz>
+// Copyright (C) 2024 Marcus Huber (xenorio) <dev@xenorio.xyz>
 // 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
@@ -13,39 +13,41 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import { Request, Response, NextFunction } from 'express'
+import { Handler } from 'express'
+import mongo from '@util/mongo'
 
-const admin = async (req: Request, res: Response, next: NextFunction) => {
+export const post: Handler = async (req, res) => {
 
-	if(!req.user || !req.user.perms || req.user.perms < 2){
-		res.status(401).json({
+	if (req.bot) {
+		res.status(403).json({
 			status: 'ERROR',
-			error: 'UNAUTHORIZED',
-			message: 'You need to be an administrator to access this'
+			error: 'USER_ONLY',
+			message: 'This endpoint is only available to users'
 		})
 		return
 	}
 
-	next()
-
-}
-
-const moderator = async (req: Request, res: Response, next: NextFunction) => {
-
-	if(!req.user || !req.user.perms || req.user.perms < 1){
+	if (!req.user) {
 		res.status(401).json({
 			status: 'ERROR',
 			error: 'UNAUTHORIZED',
-			message: 'You need to be a moderator or admin to access this'
+			message: 'Please log in first'
 		})
 		return
 	}
 
-	next()
+	const secret = req.body.secret
 
-}
+	mongo.update('Users', { _id: req.user._id }, {
+		totpEnabled: true,
+		totpSecret: secret
+	}).then((data) => {
+		console.log(data)
+		res.json({
+			status: 'SUCCESS'
+		})
+	}).catch(err => {
+		console.error(err)
+	})
 
-export default {
-	admin,
-	moderator
 }

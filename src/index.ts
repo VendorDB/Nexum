@@ -31,11 +31,44 @@ app.set('trust proxy', '127.0.0.1')
 
 async function init() {
 
+	// 10/hour
 	app.use('/api/v*/user/resend-verification', rateLimit({
-		windowMs: 15 * 60 * 1000, // 15 minutes
-		max: 10, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
-		standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-		legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+		windowMs: 60 * 60 * 1000,
+		max: 10, 
+		standardHeaders: true,
+		legacyHeaders: false,
+		message: async (req: Request, res: Response) => {
+			res.setHeader('content-type', 'application/json')
+			return {
+				status: 'ERROR',
+				error: 'TOO_MANY_REQUESTS',
+				message: 'You\'re doing this too often'
+			}
+		}
+	}))
+
+	// 10/hour
+	app.use('/api/v*/vendor/*/ownership/init', rateLimit({
+		windowMs: 60 * 60 * 1000,
+		max: 10, 
+		standardHeaders: true,
+		legacyHeaders: false,
+		message: async (req: Request, res: Response) => {
+			res.setHeader('content-type', 'application/json')
+			return {
+				status: 'ERROR',
+				error: 'TOO_MANY_REQUESTS',
+				message: 'You\'re doing this too often'
+			}
+		}
+	}))
+
+	// 1/hour
+	app.use('/api/v*/vendor/request', rateLimit({
+		windowMs: 60 * 60 * 1000,
+		max: 1, 
+		standardHeaders: true,
+		legacyHeaders: false,
 		message: async (req: Request, res: Response) => {
 			res.setHeader('content-type', 'application/json')
 			return {
@@ -47,11 +80,11 @@ async function init() {
 	}))
 
 	app.use(cors())
-	app.use(express.json({limit: '50mb'}))
+	app.use(express.json({limit: '10mb'}))
 	app.use(cookieParser())
 	app.use('/', AuthMiddleware)
 	app.use('/api/v*/admin/*', PermMiddleware.admin)
-	app.use('/api/v*/moderation/*', PermMiddleware.moderator)
+	app.use('/api/v*/moderator/*', PermMiddleware.moderator)
 	app.use(config.get('path-prefix'), await router({
 		directory: path.join(__dirname, 'routes')
 	}))

@@ -71,7 +71,9 @@ mail:
   # Customize mail subjects. To customize actual content, take a look at the templates/mail directory
   subjects:
     verification: "VendorDB Email Verification"
+    ownership_verification: "VendorDB Ownership Verification"
     recovery: "VendorDB Password Recovery"
+    ban: "Your VendorDB Account has been Banned"
 
 bcrypt:
   # Amount of hashing rounds for bcyrpt. It is recommended to set this to the number that results from `npm run bcrypt-rounds`
@@ -79,3 +81,5 @@ bcrypt:
 
 # Secret used for signing JSONWebTokens (session tokens)
 jwt-secret: 'CHANGE_ME!' # Generate your secret using `npm run jwt-secret`
+
+review-delay: '6h'

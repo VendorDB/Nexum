@@ -48,7 +48,7 @@ export const post: Handler = async (req, res) => {
 		return
 	}
 
-	if (!verifyMail(email)) {
+	if (!(await verifyMail(email))) {
 		res.status(403).json({
 			status: 'ERROR',
 			error: 'INVALID_EMAIL',
@@ -118,7 +118,7 @@ export const post: Handler = async (req, res) => {
 				emailVerified: false,
 				verificationCode,
 				passwordHash,
-				admin: (email == (<string>config.get('registration.default-admin')).toLowerCase()),
+				perms: (email == (<string>config.get('registration.default-admin')).toLowerCase()) ? 2 : 0,
 				reputation: 0
 			})
 				.then(() => {

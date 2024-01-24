@@ -13,39 +13,20 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import { Request, Response, NextFunction } from 'express'
+import { Handler } from 'express'
+import mongo from '@util/mongo'
+import { ObjectId } from 'mongodb'
 
-const admin = async (req: Request, res: Response, next: NextFunction) => {
+export const post: Handler = async (req, res) => {
 
-	if(!req.user || !req.user.perms || req.user.perms < 2){
-		res.status(401).json({
-			status: 'ERROR',
-			error: 'UNAUTHORIZED',
-			message: 'You need to be an administrator to access this'
+	const id = req.body.id
+	const payload = req.body.payload
+
+	mongo.update('Vendors', {_id: new ObjectId(id)}, payload)
+		.then(() => {
+			res.json({
+				status: 'SUCCESS'
+			})
 		})
-		return
-	}
 
-	next()
-
-}
-
-const moderator = async (req: Request, res: Response, next: NextFunction) => {
-
-	if(!req.user || !req.user.perms || req.user.perms < 1){
-		res.status(401).json({
-			status: 'ERROR',
-			error: 'UNAUTHORIZED',
-			message: 'You need to be a moderator or admin to access this'
-		})
-		return
-	}
-
-	next()
-
-}
-
-export default {
-	admin,
-	moderator
 }
