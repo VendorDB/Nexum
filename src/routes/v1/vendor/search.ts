@@ -169,6 +169,8 @@ function buildAggregationPipeline(data: any, page: number, limit: number) {
 		pipeline.push({ $sort: sortObj })
 	}
 
+	pipeline.push({ $sort: {name: 1} })
+
 	// Pagination: Add $skip and $limit stages
 	const skip = (page - 1) * limit
 	pipeline.push({ $skip: skip })
