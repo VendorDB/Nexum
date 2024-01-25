@@ -48,6 +48,7 @@ declare global {
 		isHeld: boolean;
 		vendor: string;
 		likes: string[];
+		likeAmount: number;
 	}
 
 	interface Attachment {

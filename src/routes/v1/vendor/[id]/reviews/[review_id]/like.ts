@@ -52,7 +52,12 @@ export const get: Handler = async (req, res) => {
 		return
 	}
 
-	mongo.updatePush('Reviews', { _id: new ObjectId(req.params.review_id) }, {likes: user._id.toString()})
+	likes.push(user._id.toString())
+
+	let likeAmount = review.likeAmount || 0
+	likeAmount += 1
+
+	mongo.update('Reviews', { _id: new ObjectId(req.params.review_id) }, {likes, likeAmount})
 		.then(() => {
 			res.json({
 				status: 'SUCCESS'
