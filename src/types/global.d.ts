@@ -49,6 +49,7 @@ declare global {
 		vendor: string;
 		likes: string[];
 		likeAmount: number;
+		reported: boolean;
 	}
 
 	interface Attachment {

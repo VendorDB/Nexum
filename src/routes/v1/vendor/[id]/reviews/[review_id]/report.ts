@@ -1,4 +1,4 @@
-// Copyright (C) 2023 Marcus Huber (xenorio) <dev@xenorio.xyz>
+// Copyright (C) 2024 Marcus Huber (xenorio) <dev@xenorio.xyz>
 // 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
@@ -30,16 +30,7 @@ export const get: Handler = async (req, res) => {
 		return
 	}
 
-	if (!user.admin && !user.moderator) {
-		res.status(401).json({
-			status: 'ERROR',
-			error: 'UNAUTHORIZED',
-			message: 'You are not allowed to do this'
-		})
-		return
-	}
-
-	const review = <Review>await mongo.queryOne('Reviews', { _id: req.params.review_id })
+	const review = <Review> await mongo.queryOne('Reviews', { _id: req.params.review_id })
 
 	if (!review) {
 		res.status(404).json({
@@ -50,16 +41,16 @@ export const get: Handler = async (req, res) => {
 		return
 	}
 
-	const author = <User>await mongo.queryOne('Users', { _id: review.author._id })
-	const vendor = <Vendor>await mongo.queryOne('Vendors', { _id: review.vendor })
+	if(review.author._id == user._id) {
+		res.status(403).json({
+			status: 'ERROR',
+			error: 'SELF_REPORT',
+			message: 'You can\'t report your own review'
+		})
+		return
+	}
 
-	mongo.update('Users', { _id: author._id }, { reputation: author.reputation - 1 })
-	mongo.update('Vendors', { _id: vendor._id }, {
-		stars: vendor.stars - review.stars,
-		reviewAmount: vendor.reviewAmount - 1
-	})
-
-	mongo.remove('Reviews', { _id: new ObjectId(req.params.review_id) })
+	mongo.update('Reviews', { _id: new ObjectId(req.params.review_id) }, {reported: true})
 		.then(() => {
 			res.json({
 				status: 'SUCCESS'

@@ -128,7 +128,8 @@ export const post: Handler = async (req, res) => {
 		isHeld,
 		vendor: vendor._id,
 		likes: [],
-		likeAmount: 0
+		likeAmount: 0,
+		reported: false
 	}
 
 	//console.log(await mongo.query('Reviews', {vendor: vendor._id}))
