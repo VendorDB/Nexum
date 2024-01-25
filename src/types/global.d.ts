@@ -52,6 +52,13 @@ declare global {
 		reported: boolean;
 	}
 
+	interface Country {
+		label: string;
+		value: string;
+		flag: string;
+		name: string;
+	}
+
 	interface Attachment {
 		data: string;
 	}
@@ -67,7 +74,8 @@ declare global {
 		reviewAmount: number;
 		starsAverage: number;
 		products?: Product[];
-		shipping?: ShippingList
+		shipping?: ShippingList;
+		country?: Country;
 	}
 
 	interface VendorRequest {

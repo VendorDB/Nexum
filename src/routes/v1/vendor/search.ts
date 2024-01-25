@@ -47,6 +47,10 @@ function buildAggregationPipeline(data: any, page: number, limit: number) {
 		pipeline.push({ $match: { name: { $regex: data.name, $options: 'i' } } })
 	}
 
+	if (data.country) {
+		pipeline.push({ $match: { 'country.value': data.country } })
+	}
+
 	// Match stage for filtering based on minimum average rating
 	if (data.minAverageRating) {
 		pipeline.push({
@@ -169,7 +173,7 @@ function buildAggregationPipeline(data: any, page: number, limit: number) {
 		pipeline.push({ $sort: sortObj })
 	}
 
-	pipeline.push({ $sort: {averageRating: -1, name: 1} })
+	pipeline.push({ $sort: { averageRating: -1, name: 1 } })
 
 	// Pagination: Add $skip and $limit stages
 	const skip = (page - 1) * limit
