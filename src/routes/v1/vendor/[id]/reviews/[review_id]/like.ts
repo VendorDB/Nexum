@@ -41,6 +41,15 @@ export const get: Handler = async (req, res) => {
 		return
 	}
 
+	if(review.author._id == user._id) {
+		res.status(403).json({
+			status: 'ERROR',
+			error: 'SELF_LIKE',
+			message: 'You can\'t like your own review'
+		})
+		return
+	}
+
 	const likes = review.likes || []
 
 	if(likes.includes(user._id.toString())){
