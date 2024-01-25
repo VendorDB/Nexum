@@ -26,6 +26,7 @@ export const post: Handler = async (req, res) => {
 	const products = req.body.products
 	const shipping = req.body.shipping
 	const owner = req.body.owner || 'system'
+	const country = req.body.country
 
 	mongo.insert('Vendors', {
 		name,
@@ -37,7 +38,8 @@ export const post: Handler = async (req, res) => {
 		starsAverage: 0,
 		owner,
 		shipping,
-		products
+		products,
+		country
 	})
 		.then((data: any) => {
 			res.json({
