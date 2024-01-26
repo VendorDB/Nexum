@@ -76,6 +76,10 @@ export const post: Handler = async (req, res) => {
 
 	}
 
+	if(req.body.about) {
+		data.about = req.body.about
+	}
+
 	mongo.update('Users', { _id: req.user._id }, data)
 		.then(() => {
 			res.json({
