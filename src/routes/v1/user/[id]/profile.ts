@@ -14,6 +14,7 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import { Handler } from 'express'
+import { getDefaultPicture } from '@util/misc'
 import mongo from '@util/mongo'
 import { ObjectId } from 'mongodb'
 
@@ -30,12 +31,10 @@ export const get: Handler = async (req, res) => {
 		return
 	}
 
-	const pipeline = [
-		{$match: {'author._id': req.params.id, isHeld: false}},
-		{$sort: {created: -1, _id: 1}}
-	]
-
-	const reviews = <Review[]> await mongo.aggregate('Reviews', pipeline)
-
-	res.json(reviews)
+	res.json({
+		username: user.username,
+		about: user.about,
+		_id: user._id.toString(),
+		profile_picture: user.profile_picture || getDefaultPicture()
+	})
 }
