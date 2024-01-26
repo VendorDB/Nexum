@@ -19,7 +19,7 @@ import { ObjectId } from 'mongodb'
 
 export const get: Handler = async (req, res) => {
 
-	const user = <User | null> await mongo.queryOne('Users', {_id: new ObjectId(req.params.id)})
+	const user = <User | null>await mongo.queryOne('Users', { _id: new ObjectId(req.params.id) })
 
 	if (!user) {
 		res.status(404).json({
@@ -30,12 +30,18 @@ export const get: Handler = async (req, res) => {
 		return
 	}
 
+	const pageSize = parseInt(<string>req.query.limit) || 25
+	const pageNumber = parseInt(<string>req.query.page) || 1
+	const skipItems = (pageNumber - 1) * pageSize
+
 	const pipeline = [
-		{$match: {'author._id': req.params.id, isHeld: false}},
-		{$sort: {created: -1, _id: 1}}
+		{ $match: { 'author._id': req.params.id, isHeld: false } },
+		{ $sort: { created: -1, _id: 1 } },
+		{ $skip: skipItems },
+		{ $limit: pageSize }
 	]
 
-	const reviews = <Review[]> await mongo.aggregate('Reviews', pipeline)
+	const reviews = <Review[]>await mongo.aggregate('Reviews', pipeline)
 
 	res.json(reviews)
 }
