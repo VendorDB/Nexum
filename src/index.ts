@@ -79,7 +79,10 @@ async function init() {
 		}
 	}))
 
-	app.use(cors())
+	app.use(cors({
+		origin: config.get('client-url')
+	}))
+	
 	app.use(express.json({limit: '10mb'}))
 	app.use(cookieParser())
 	app.use('/', AuthMiddleware)
