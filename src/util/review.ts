@@ -23,6 +23,7 @@ export const purgeReviews = async (filter: any) => {
 	const vendorList: any = {}
 
 	for(const review of reviews) {
+		if(review.isHeld) continue
 		if(!vendorList[review.vendor]){
 			vendorList[review.vendor] = {
 				amount: 1,
