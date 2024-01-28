@@ -15,6 +15,7 @@
 
 import { Handler } from 'express'
 import mongo from '@util/mongo'
+import { purgeReviews } from '@util/review'
 import { ObjectId } from 'mongodb'
 
 export const get: Handler = async (req, res) => {
@@ -41,7 +42,7 @@ export const get: Handler = async (req, res) => {
 
 	mongo.remove('Users', {_id: new ObjectId(req.user._id)})
 
-	mongo.removeAll('Reviews', {'author._id': req.user._id.toString()})
+	purgeReviews({'author._id': req.user._id.toString()})
 
 	res.json({
 		status: 'SUCCESS'

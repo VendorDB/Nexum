@@ -72,7 +72,7 @@ declare global {
 		owner: string;
 		stars: number;
 		reviewAmount: number;
-		starsAverage: number;
+		averageRating: number;
 		products?: Product[];
 		shipping?: ShippingList;
 		country?: Country;

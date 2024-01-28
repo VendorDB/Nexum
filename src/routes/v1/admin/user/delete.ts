@@ -16,14 +16,15 @@
 import { Handler } from 'express'
 import mongo from '@util/mongo'
 import { ObjectId } from 'mongodb'
-import { createHash } from 'crypto'
-import { sendMail } from '@util/mail'
+import { purgeReviews } from '@util/review'
 
 export const post: Handler = async (req, res) => {
 
 	const id = req.body.id
 
 	mongo.remove('Users', {_id: new ObjectId(id)})
+
+	purgeReviews({'author._id': id})
 
 	res.json({
 		status: 'SUCCESS'

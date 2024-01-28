@@ -15,6 +15,7 @@
 
 import { Handler } from 'express'
 import mongo from '@util/mongo'
+import { purgeReviews } from '@util/review'
 import { ObjectId } from 'mongodb'
 import { createHash } from 'crypto'
 import { sendMail } from '@util/mail'
@@ -27,6 +28,8 @@ export const post: Handler = async (req, res) => {
 	const user = <User> await mongo.queryOne('Users', {_id: new ObjectId(id)})
 
 	mongo.remove('Users', {_id: new ObjectId(id)})
+
+	purgeReviews({'author._id': id})
 
 	const hashedEmail = createHash('sha256').update(user.email).digest('base64')
 
