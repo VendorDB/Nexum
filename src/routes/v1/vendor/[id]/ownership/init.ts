@@ -22,6 +22,16 @@ import hat from 'hat'
 import { sendMail } from '@util/mail'
 
 export const post: Handler = async (req, res) => {
+
+	if (req.bot) {
+		res.status(403).json({
+			status: 'ERROR',
+			error: 'USER_ONLY',
+			message: 'This endpoint is only available to users'
+		})
+		return
+	}
+
 	const user: User = req.user
 	const email: string = req.body.email
 

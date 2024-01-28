@@ -18,6 +18,16 @@ import { Request, Response } from 'express'
 
 module.exports = {
 	async post(req: Request, res: Response) {
+
+		if (req.bot) {
+			res.status(403).json({
+				status: 'ERROR',
+				error: 'USER_ONLY',
+				message: 'This endpoint is only available to users'
+			})
+			return
+		}
+
 		const code = req.body.code
 
 		if (!code) {
