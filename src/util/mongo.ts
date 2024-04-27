@@ -16,6 +16,9 @@
 
 import config from 'config'
 import { MongoClient, ObjectId, Db } from 'mongodb'
+import { EventEmitter } from 'events'
+
+const emitter = new EventEmitter()
 
 const server: string = config.get('database.url')
 const db_name: string = config.get('database.name')
@@ -25,6 +28,7 @@ let db: Db
 MongoClient.connect(server)
 	.then(s => {
 		db = s.db(db_name)
+		emitter.emit('connected')
 	})
 	.catch(err => {
 		console.error(err)
@@ -157,5 +161,6 @@ export default {
 	updatePush,
 	aggregate,
 	aggregateWithCount,
-	count
+	count,
+	emitter
 }

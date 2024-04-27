@@ -24,6 +24,8 @@ import rateLimit from 'express-rate-limit'
 import cors from 'cors'
 import { Request, Response } from 'express'
 import PermMiddleware from '@middleware/perms'
+import mongo from '@util/mongo'
+import startRoutine from './start-routine'
 
 const app = express()
 
@@ -34,7 +36,7 @@ async function init() {
 	// 10/hour
 	app.use('/api/v*/user/resend-verification', rateLimit({
 		windowMs: 60 * 60 * 1000,
-		max: 10, 
+		max: 10,
 		standardHeaders: true,
 		legacyHeaders: false,
 		message: async (req: Request, res: Response) => {
@@ -50,7 +52,7 @@ async function init() {
 	// 10/hour
 	app.use('/api/v*/vendor/*/ownership/init', rateLimit({
 		windowMs: 60 * 60 * 1000,
-		max: 10, 
+		max: 10,
 		standardHeaders: true,
 		legacyHeaders: false,
 		message: async (req: Request, res: Response) => {
@@ -66,7 +68,7 @@ async function init() {
 	// 1/hour
 	app.use('/api/v*/vendor/request', rateLimit({
 		windowMs: 60 * 60 * 1000,
-		max: 1, 
+		max: 1,
 		standardHeaders: true,
 		legacyHeaders: false,
 		message: async (req: Request, res: Response) => {
@@ -82,8 +84,8 @@ async function init() {
 	app.use(cors({
 		origin: config.get('client-url')
 	}))
-	
-	app.use(express.json({limit: '10mb'}))
+
+	app.use(express.json({ limit: '10mb' }))
 	app.use(cookieParser())
 	app.use('/', AuthMiddleware)
 	app.use('/api/v*/admin/*', PermMiddleware.admin)
@@ -92,10 +94,15 @@ async function init() {
 		directory: path.join(__dirname, 'routes')
 	}))
 
+	mongo.emitter.on('connected', async () => {
+		
+		await startRoutine()
 
-	app.listen(config.get('port'), () => {
-		console.log('Listening on port ' + config.get('port'))
+		app.listen(config.get('port'), () => {
+			console.log('Listening on port ' + config.get('port'))
+		})
 	})
+
 }
 
 init()

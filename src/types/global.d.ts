@@ -33,6 +33,7 @@ declare global {
 		lastReviewPosted: number;
 		totpEnabled?: boolean;
 		totpSecret?: string;
+		created: number;
 	}
 
 	interface Review {
@@ -50,6 +51,7 @@ declare global {
 		likes: string[];
 		likeAmount: number;
 		reported: boolean;
+		verified: boolean;
 	}
 
 	interface Country {

@@ -50,7 +50,7 @@ module.exports = {
 			return
 		}
 
-		mongo.update('Users', user, { emailVerified: true })
+		mongo.update('Users', user, { emailVerified: true, created: Date.now() })
 			.then(() => {
 				res.json({
 					status: 'SUCCESS'

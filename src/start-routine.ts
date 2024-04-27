@@ -13,30 +13,16 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import { Handler } from 'express'
-import { getDefaultPicture } from '@util/misc'
 import mongo from '@util/mongo'
-import { ObjectId } from 'mongodb'
 
-export const get: Handler = async (req, res) => {
+const run = async () => {
+	const users = await mongo.query('Users', {})
 
-	const user = <User | null> await mongo.queryOne('Users', {_id: new ObjectId(req.params.id)})
-
-	if (!user) {
-		res.status(404).json({
-			status: 'ERROR',
-			error: 'NOT_FOUND',
-			message: 'There is no user with this ID'
-		})
-		return
-	}
-
-	res.json({
-		username: user.username,
-		about: user.about,
-		_id: user._id.toString(),
-		profile_picture: user.profile_picture || getDefaultPicture(),
-		perms: user.perms,
-		created: user.created
+	users?.forEach((user: any) => {
+		if(!user.created) {
+			mongo.update('Users', {_id: user._id}, {created: Date.now()})
+		}
 	})
 }
+
+export default run
